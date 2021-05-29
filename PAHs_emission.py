@@ -7,7 +7,7 @@ from netCDF4 import Dataset
 Load the Living Biomass 2000 - 2015, unit in [tonnes/hectare], 0.05 deg
 Typical name is 'Living Biomass1990.nc'
 """
-Living_Address = 'G:/Living Biomass/'
+Living_Address = 'H:/Living Biomass/'
 Living_namelist = find.find_file(Living_Address, '.nc')
 print('load', len(Living_namelist), 'Living Biomass files.')
 
@@ -16,7 +16,7 @@ Load the Modis Burned area data set, unit in [hectare],  0.25 deg, scale factor 
 Typical name: 'MCD64CMQ.A2000306.006.2018149224217.hdf'
 """
 
-ModisBA_address = 'G:/MCD64CMQ(burned area)/C6/'
+ModisBA_address = 'H:/MCD64CMQ(burned area)/C6/'
 ModisBANamelist = find.find_file(ModisBA_address, '.hdf')
 BAname_long = len(ModisBANamelist[1])
 print('load', len(ModisBANamelist), 'Burned Area data set.')
@@ -26,9 +26,9 @@ define the emission factor, Combustion factor
 """
 # notice the carbon storage in unit tons, and the emission factor is always in [mg/kg]
 # transfer its into [mg/tonnes],  so factor 1000 is use here
-BaP_ef = 1*2*1000
-PHE_ef = 5*2*1000
-CC = 0.25
+BaP_ef = 1*1000
+PHE_ef = 8*1000
+CC = 0.20
 degree = 0.25
 row = int(180/degree)
 col = int(360/degree)
@@ -73,12 +73,14 @@ for i in range(2001, 2015):
             Burned_file = SD(ModisBANamelist[j], SDC.READ)
             burned_area = Burned_file.select('BurnedArea').get() * 0.01  # the scale factor is 0.01, unit is hectare.
             burned_area = np.divide(burned_area, area*100)   # transfer the burned area into percentage in each Grid.
-            cover_dist = Burned_file.select('LandCoverDist').get() * 0.01  # fraction of burned area in each land cover class.
+            cover_dist = Burned_file.select('LandCoverDist').get() * 0.01  # fraction of burned area in each land class.
             cover_dist[0, :, :] = 1   # use the first type(water) to represent all type emission.
 
             for k in range(cover_dist.shape[0]):
-                BaP_emission[k, :, :] = BaP_emission[k, :, :] + np.multiply(carbon_storage * CC, burned_area)*BaP_ef * cover_dist[k, :, :]
-                PHE_emission[k, :, :] = PHE_emission[k, :, :] + np.multiply(carbon_storage * CC, burned_area) * PHE_ef * cover_dist[k, :, :]
+                BaP_emission[k, :, :] = BaP_emission[k, :, :] + np.multiply(carbon_storage * CC,
+                                                                            burned_area)*BaP_ef * cover_dist[k, :, :]
+                PHE_emission[k, :, :] = PHE_emission[k, :, :] + np.multiply(carbon_storage * CC,
+                                                                            burned_area) * PHE_ef * cover_dist[k, :, :]
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -114,14 +116,16 @@ for i in range(2001, 2015):
     PHE_emi = fire_data.createVariable('PHE_emi', np.float64, ('type', 'latitude', 'longitude',))
     PHE = fire_data.createVariable('PHE', np.float64, ('latitude', 'longitude',))
     lat.units = 'degrees_north'
+    lat.axis = 'Y'
     lon.units = 'degrees_east'
+    lon.axis = 'X'
     fuel_load.units = 'ton'
     grid_area.units = 'km2'
     BaP_emi.units = 'kg/m2/s'
     PHE_emi.units = 'kg/m2/s'
     fire_data.variables['lat'][:] = np.arange(-90+(degree/2), 90+(degree/2), degree)
     fire_data.variables['lon'][:] = np.arange(-180+(degree/2), 180+(degree/2), degree)
-    fire_data.variables['fuel_load'][:] = carbon_storage
+    fire_data.variables['fuel_load'][:] = carbon_storage[::-1]
     fire_data.variables['BaP'][:] = BaP_emission[0, :, :]
     fire_data.variables['BaP_emi'][:] = BaP_emission[1:, :, :]
     fire_data.variables['PHE'][:] = PHE_emission[0, :, :]

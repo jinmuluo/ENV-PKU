@@ -92,7 +92,6 @@ for i in range(2001, 2015):
 
             for k in range(cover_dist.shape[0]):
                 BaP_emission[k, :, :] = BaP_emission[k, :, :] + np.multiply(carbon_storage * CC, burned_area)*BaP_ef * cover_dist[k, :, :]
-                PAHs_emission[k, :, :] = PAHs_emission[k, :, :] + np.multiply(carbon_storage * CC, burned_area) * PAH16_ef * cover_dist[k, :, :]
                 PHE_emission[k, :, :] = PHE_emission[k, :, :] + np.multiply(carbon_storage * CC, burned_area) * PHE_ef * cover_dist[k, :, :]
                 carbon_storage = carbon_storage + npp_global_add/12 - np.multiply(carbon_storage, burned_area)*CC
     yr_hour = 365*24
