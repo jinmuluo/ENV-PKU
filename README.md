@@ -1,2 +1,2 @@
 # Environment
-My Private works in Peking University
+My Private works at Peking University
